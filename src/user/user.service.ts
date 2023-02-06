@@ -1,12 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  ForbiddenException,
+} from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common/exceptions';
 import { v4, validate } from 'uuid';
-import User from './user.interface';
+import User from './interface/user.interface';
 
 const users: User[] = [];
 
 @Injectable()
-export class UsersService {
+export class UserService {
   find(): User[] {
     return users;
   }
@@ -66,6 +70,8 @@ export class UsersService {
     if (oldPassword === user.password) {
       user.password = newPassword;
       users[index] = user;
+    } else {
+      throw new ForbiddenException('Password is incorrect');
     }
 
     return user;

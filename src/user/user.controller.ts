@@ -10,33 +10,34 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import User from './user.interface';
-import { UsersService } from './users.service';
+import User from './interface/user.interface';
+import { UserService } from './user.service';
 
-@Controller('users')
-export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+@Controller('user')
+export class UserController {
+  constructor(private readonly userService: UserService) {}
 
   @Get()
   @HttpCode(200)
   getUsers(): User[] {
-    return this.usersService.find();
+    return this.userService.find();
   }
 
   @Post()
   @HttpCode(201)
   createUser(@Body() CreateUserDto: CreateUserDto) {
-    return this.usersService.create(CreateUserDto);
+    return this.userService.create(CreateUserDto);
   }
 
   @Get(':id')
   @HttpCode(200)
   getById(@Param('id') id: string) {
-    return this.usersService.findOne(id);
+    return this.userService.findOne(id);
   }
 
   @Put(':id')
+  @HttpCode(200)
   updateUser(@Body() updateUserDto: UpdateUserDto, @Param('id') id: string) {
-    return this.usersService.updateOne(updateUserDto, id);
+    return this.userService.updateOne(updateUserDto, id);
   }
 }

@@ -45,7 +45,7 @@ export class UsersService {
     return user;
   }
 
-  updateOne({ login, password }, id: string): User {
+  updateOne({ oldPassword, newPassword }, id: string): User {
     const compareId = validate(id);
 
     if (!compareId) {
@@ -63,11 +63,8 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    if (password === user.password) {
-      user.login = login;
-      user.password = password;
-      user.updatedAt = new Date().getTime();
-      user.version = user.version + 1;
+    if (oldPassword === user.password) {
+      user.password = newPassword;
       users[index] = user;
     }
 

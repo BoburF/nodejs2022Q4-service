@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import User from './user.interface';
 import { UsersService } from './users.service';
 
@@ -30,12 +31,12 @@ export class UsersController {
 
   @Get(':id')
   @HttpCode(200)
-  getById(@Param() params) {
-    return this.usersService.findOne(params.id);
+  getById(@Param('id') id: string) {
+    return this.usersService.findOne(id);
   }
 
   @Put(':id')
-  updateUser(@Body() CreateUserDto: CreateUserDto, @Param() params) {
-    return this.usersService.updateOne(CreateUserDto, params.id);
+  updateUser(@Body() updateUserDto: UpdateUserDto, @Param('id') id: string) {
+    return this.usersService.updateOne(updateUserDto, id);
   }
 }

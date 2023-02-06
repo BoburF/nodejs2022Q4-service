@@ -6,6 +6,7 @@ import {
   Body,
   Param,
   Put,
+  Delete,
 } from '@nestjs/common';
 import { CreateUpdateTrackDto } from './dto/create-update-track.dto';
 import { TrackService } from './track.service';
@@ -39,5 +40,11 @@ export class TrackController {
     @Param('id') id: string,
   ) {
     return this.trackService.updateOne(updateTrackDto, id);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  deleteAlbum(@Param('id') id: string) {
+    return this.trackService.delete(id);
   }
 }

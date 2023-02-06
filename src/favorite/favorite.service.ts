@@ -1,13 +1,27 @@
-import { Injectable } from '@nestjs/common';
-import { IncomingMessage } from 'http';
-import { get } from 'https';
+import {
+  Injectable,
+  BadRequestException,
+  UnprocessableEntityException,
+  Logger,
+} from '@nestjs/common';
+import { IncomingMessage, get, request } from 'http';
+import { albums } from 'src/album/album.service';
+import { artists } from 'src/artist/artist.service';
+import { tracks } from 'src/track/track.service';
+import { validate } from 'uuid';
 import { Favorite } from './interface/favorit.interface';
 import { Favorites } from './interface/favorites.interface';
 
-const favorites: Favorite = {
+export const favorites: Favorite = {
   artists: [],
   albums: [],
   tracks: [],
+};
+
+const ckeckObj = {
+  track: tracks,
+  artist: artists,
+  album: albums,
 };
 
 @Injectable()
@@ -45,8 +59,57 @@ export class FavoriteService {
     return favoritesAll;
   }
 
-  addId(key: string, id: string) {
-    favorites[key].push(id);
-    return favorites;
+  async addId(key: string, id: string) {
+    const compareId = validate(id);
+
+    if (!compareId) {
+      throw new BadRequestException('Id is not valid');
+    }
+
+    let resStatus = false;
+
+    const clas = ckeckObj[key];
+    if (clas) {
+      clas.find((element) => {
+        if (element.id === id) {
+          resStatus = true;
+        }
+      });
+    }
+
+    if (resStatus) {
+      favorites[key + 's'].push(id);
+      return favorites;
+    } else {
+      throw new UnprocessableEntityException('Id doesn"t exist');
+    }
+  }
+
+  delete(key: string, id: string) {
+    const compareId = validate(id);
+
+    if (!compareId) {
+      throw new BadRequestException('Id is not valid');
+    }
+    let resStatus = false;
+
+    const clas = ckeckObj[key];
+    if (clas) {
+      clas.find((element) => {
+        if (element.id === id) {
+          resStatus = true;
+        }
+      });
+    }
+
+    if (resStatus) {
+      const deletedId = favorites[key].splice(
+        favorites[key + 's'].findIndex((element: string) => element === id),
+        1,
+      );
+      return { message: `${deletedId} is deleted` };
+    } else {
+      throw new BadRequestException('Track is not defined');
+    }
   }
 }

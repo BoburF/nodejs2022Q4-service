@@ -3,10 +3,12 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+import { favorites } from 'src/favorite/favorite.service';
+import { tracks } from 'src/track/track.service';
 import { v4, validate } from 'uuid';
 import { Artist } from './interface/artist.interface';
 
-const artists: Artist[] = [];
+export const artists: Artist[] = [];
 
 @Injectable()
 export class ArtistService {
@@ -56,12 +58,39 @@ export class ArtistService {
     });
 
     if (!artist) {
-      throw new NotFoundException('Artist not found');
+      return null;
     }
 
     artist.name = name;
     artist.grammy = grammy;
     artists[index] = artist;
+
+    return artist;
+  }
+
+  delete(id: string) {
+    const compareId = validate(id);
+
+    if (!compareId) {
+      throw new BadRequestException('Id is not valid');
+    }
+    let index: number | null;
+    const artist: Artist | null = artists.find((artist, idx) => {
+      if (artist.id === id) {
+        index = idx;
+        return artist;
+      }
+    });
+
+    if (!artist) {
+      throw new NotFoundException('Track not found');
+    }
+
+    artists.splice(index, 1);
+    const idx = favorites.artists.indexOf(id);
+    favorites.artists.splice(idx, 1);
+    const idxTraxks = tracks.findIndex((element) => element.artistId === id);
+    tracks[idxTraxks].artistId = null;
 
     return artist;
   }

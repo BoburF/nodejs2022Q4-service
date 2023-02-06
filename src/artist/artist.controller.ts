@@ -6,6 +6,7 @@ import {
   Put,
   Body,
   HttpCode,
+  Delete,
 } from '@nestjs/common';
 import { ArtistService } from './artist.service';
 import { CreateUpdateArtistDto } from './dto/create-update-track.dto';
@@ -38,5 +39,11 @@ export class ArtistController {
     @Param('id') id: string,
   ) {
     return this.artistService.updateOne(updateArtistDto, id);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  deleteAlbum(@Param('id') id: string) {
+    return this.artistService.delete(id);
   }
 }

@@ -6,6 +6,7 @@ import {
   Put,
   Body,
   HttpCode,
+  Delete,
 } from '@nestjs/common';
 import { AlbumService } from './album.service';
 import { CreateUpdateAlbumDto } from './dto/create-update-album.dto';
@@ -39,5 +40,11 @@ export class AlbumController {
     @Param('id') id: string,
   ) {
     return this.albumService.updateOne(updateAlbumDto, id);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  deleteAlbum(@Param('id') id: string) {
+    return this.albumService.delete(id);
   }
 }

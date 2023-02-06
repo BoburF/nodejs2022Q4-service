@@ -3,10 +3,11 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+import { favorites } from 'src/favorite/favorite.service';
 import { v4, validate } from 'uuid';
 import { Track } from './interface/track.interface';
 
-const tracks: Track[] = [];
+export const tracks: Track[] = [];
 
 @Injectable()
 export class TrackService {
@@ -37,7 +38,7 @@ export class TrackService {
     const track: Track | null = tracks.find((track) => track.id === id);
 
     if (!track) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Track not found');
     }
 
     return track;
@@ -66,6 +67,31 @@ export class TrackService {
     track.artistId = artistId;
     track.duration = duration;
     tracks[index] = track;
+
+    return track;
+  }
+
+  delete(id: string) {
+    const compareId = validate(id);
+
+    if (!compareId) {
+      throw new BadRequestException('Id is not valid');
+    }
+    let index: number | null;
+    const track: Track | null = tracks.find((track, idx) => {
+      if (track.id === id) {
+        index = idx;
+        return track;
+      }
+    });
+
+    if (!track) {
+      throw new NotFoundException('Track not found');
+    }
+
+    tracks.splice(index, 1);
+    const idx = favorites.tracks.indexOf(id);
+    favorites.tracks.splice(idx, 1);
 
     return track;
   }

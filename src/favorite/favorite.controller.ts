@@ -1,11 +1,12 @@
 import {
-  Body,
   Controller,
   Get,
   Post,
   HttpCode,
-  Put,
+  Delete,
   Param,
+  Req,
+  Request,
 } from '@nestjs/common';
 import { FavoriteService } from './favorite.service';
 
@@ -14,7 +15,20 @@ export class FavoriteController {
   constructor(private readonly favoriteService: FavoriteService) {}
 
   @Get()
+  @HttpCode(200)
   getFavorites() {
     return this.favoriteService.find();
+  }
+
+  @Post('/:key/:id')
+  @HttpCode(201)
+  addId(@Param('id') id: string, @Param('key') key: string) {
+    return this.favoriteService.addId(key, id);
+  }
+
+  @Delete('/:key/:id')
+  @HttpCode(204)
+  deleteId(@Param('id') id: string, @Param('key') key: string) {
+    return this.favoriteService.delete(key, id);
   }
 }

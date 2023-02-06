@@ -34,7 +34,7 @@ export class TrackService {
       throw new BadRequestException('Id is not valid');
     }
 
-    const track: Track | null = tracks.find((track) => id === track.id);
+    const track: Track | null = tracks.find((track) => track.id === id);
 
     if (!track) {
       throw new NotFoundException('User not found');

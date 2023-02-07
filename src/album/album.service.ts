@@ -90,9 +90,9 @@ export class AlbumService {
 
     albums.splice(index, 1);
     const idx = favorites.albums.indexOf(id);
-    favorites.albums.splice(idx, 1);
+    if (idx) favorites.albums.splice(idx, 1);
     const idxTraxks = tracks.findIndex((element) => element.albumId === id);
-    tracks[idxTraxks].albumId = null;
+    if (tracks[idxTraxks]) tracks[idxTraxks].albumId = null;
 
     return album;
   }

@@ -58,7 +58,7 @@ export class ArtistService {
     });
 
     if (!artist) {
-      return null;
+      throw new NotFoundException('Track not found');
     }
 
     artist.name = name;
@@ -88,9 +88,9 @@ export class ArtistService {
 
     artists.splice(index, 1);
     const idx = favorites.artists.indexOf(id);
-    favorites.artists.splice(idx, 1);
-    const idxTraxks = tracks.findIndex((element) => element.artistId === id);
-    tracks[idxTraxks].artistId = null;
+    if (idx) favorites.artists.splice(idx, 1);
+    const idxTraxks = tracks.findIndex((track) => track.artistId === id);
+    if (tracks[idxTraxks]) tracks[idxTraxks].artistId = null;
 
     return artist;
   }

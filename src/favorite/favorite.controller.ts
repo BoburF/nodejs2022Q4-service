@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { FavoriteService } from './favorite.service';
 
-@Controller('favorite')
+@Controller('favs')
 export class FavoriteController {
   constructor(private readonly favoriteService: FavoriteService) {}
 
@@ -28,7 +28,7 @@ export class FavoriteController {
 
   @Delete('/:key/:id')
   @HttpCode(204)
-  deleteId(@Param('id') id: string, @Param('key') key: string) {
+  deleteId(@Param('key') key: string, @Param('id') id: string) {
     return this.favoriteService.delete(key, id);
   }
 }

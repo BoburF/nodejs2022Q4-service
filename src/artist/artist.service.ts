@@ -2,18 +2,29 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  forwardRef,
+  Inject,
 } from '@nestjs/common';
-import { favorites } from 'src/favorite/favorite.service';
-import { tracks } from 'src/track/track.service';
-import { v4, validate } from 'uuid';
+import { AlbumService } from 'src/album/album.service';
+import { Database } from 'src/db/db';
+import { FavoriteService } from 'src/favorite/favorite.service';
+import { TrackService } from 'src/track/track.service';
+import { v4 } from 'uuid';
+import { CreateUpdateArtistDto } from './dto/create-update-track.dto';
 import { Artist } from './interface/artist.interface';
 
 export const artists: Artist[] = [];
 
 @Injectable()
 export class ArtistService {
+  constructor(
+    private db: Database,
+    private albumService: AlbumService,
+    private trackService: TrackService,
+    private favsService: FavoriteService,
+  ) {}
   find(): Artist[] {
-    return artists;
+    return this.db.artists;
   }
 
   create({ name, grammy }): Artist {
@@ -23,75 +34,30 @@ export class ArtistService {
       name,
       grammy,
     };
-    artists.push(artist);
+    this.db.artists.push(artist);
     return artist;
   }
 
   findOne(id: string): Artist {
-    const compareId = validate(id);
-
-    if (!compareId) {
-      throw new BadRequestException('Id is not valid');
-    }
-
-    const artist: Artist | null = artists.find((artist) => artist.id === id);
-
-    if (!artist) {
-      throw new NotFoundException('Artist not found');
-    }
-
+    const artist = this.db.artists.find((artist) => artist.id === id);
+    if (!artist) throw new NotFoundException('Artist not found');
     return artist;
   }
 
-  updateOne({ name, grammy }, id: string): Artist {
-    const compareId = validate(id);
-
-    if (!compareId) {
-      throw new BadRequestException('Id is not valid');
-    }
-    let index: number | null;
-    const artist: Artist | null = artists.find((artist, idx) => {
-      if (artist.id === id) {
-        index = idx;
-        return artist;
-      }
-    });
-
-    if (!artist) {
-      throw new NotFoundException('Track not found');
-    }
-
-    artist.name = name;
-    artist.grammy = grammy;
-    artists[index] = artist;
-
-    return artist;
+  updateOne(artistDto: CreateUpdateArtistDto, id: string): Artist {
+    const index = this.db.artists.findIndex((artist) => artist.id === id);
+    if (index === -1) throw new NotFoundException('Artist not found');
+    this.db.artists[index] = { id, ...artistDto };
+    return this.db.artists[index];
   }
 
   delete(id: string) {
-    const compareId = validate(id);
-
-    if (!compareId) {
-      throw new BadRequestException('Id is not valid');
-    }
-    let index: number | null;
-    const artist: Artist | null = artists.find((artist, idx) => {
-      if (artist.id === id) {
-        index = idx;
-        return artist;
-      }
-    });
-
-    if (!artist) {
-      throw new NotFoundException('Track not found');
-    }
-
-    artists.splice(index, 1);
-    const idx = favorites.artists.indexOf(id);
-    if (idx) favorites.artists.splice(idx, 1);
-    const idxTraxks = tracks.findIndex((track) => track.artistId === id);
-    if (tracks[idxTraxks]) tracks[idxTraxks].artistId = null;
-
-    return artist;
+    const index = this.db.artists.findIndex((artist) => artist.id === id);
+    if (index === -1) throw new NotFoundException('Artist is not found');
+    this.db.artists.splice(index, 1);
+    this.albumService.updateArtistId(id);
+    this.trackService.updateArtistId(id);
+    if (this.db.favorites.artists.includes(id))
+      this.favsService.delete('artist', id);
   }
 }

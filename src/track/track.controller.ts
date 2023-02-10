@@ -8,7 +8,9 @@ import {
   Put,
   Delete,
 } from '@nestjs/common';
+import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { CreateUpdateTrackDto } from './dto/create-update-track.dto';
+import { Track } from './interface/track.interface';
 import { TrackService } from './track.service';
 
 @Controller('track')
@@ -17,19 +19,19 @@ export class TrackController {
 
   @Get()
   @HttpCode(200)
-  getTracks() {
+  getTracks(): Track[] {
     return this.trackService.find();
   }
 
   @Post()
   @HttpCode(201)
-  createTrack(@Body() createTrackDto: CreateUpdateTrackDto) {
+  createTrack(@Body() createTrackDto: CreateUpdateTrackDto): Track {
     return this.trackService.create(createTrackDto);
   }
 
   @Get(':id')
   @HttpCode(200)
-  getById(@Param('id') id: string) {
+  getById(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): Track {
     return this.trackService.findOne(id);
   }
 
@@ -37,14 +39,16 @@ export class TrackController {
   @HttpCode(200)
   updateTrack(
     @Body() updateTrackDto: CreateUpdateTrackDto,
-    @Param('id') id: string,
-  ) {
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+  ): Track {
     return this.trackService.updateOne(updateTrackDto, id);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  deleteAlbum(@Param('id') id: string) {
+  deleteAlbum(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+  ): void {
     return this.trackService.delete(id);
   }
 }

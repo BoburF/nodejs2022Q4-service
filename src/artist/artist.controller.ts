@@ -7,6 +7,7 @@ import {
   Body,
   HttpCode,
   Delete,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ArtistService } from './artist.service';
 import { CreateUpdateArtistDto } from './dto/create-update-track.dto';
@@ -28,7 +29,7 @@ export class ArtistController {
 
   @Get(':id')
   @HttpCode(200)
-  getById(@Param('id') id: string) {
+  getById(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.artistService.findOne(id);
   }
 
@@ -36,14 +37,14 @@ export class ArtistController {
   @HttpCode(200)
   updateTrack(
     @Body() updateArtistDto: CreateUpdateArtistDto,
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
   ) {
     return this.artistService.updateOne(updateArtistDto, id);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  deleteAlbum(@Param('id') id: string) {
+  deleteAlbum(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.artistService.delete(id);
   }
 }

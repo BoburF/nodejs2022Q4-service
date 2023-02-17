@@ -5,7 +5,10 @@ import { Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('favorite')
 export class Favorite {
-  @PrimaryGeneratedColumn()
+  filter(arg0: (fav: any) => boolean): Favorite {
+    throw new Error('Method not implemented.');
+  }
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @ManyToMany(() => Artist)

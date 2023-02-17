@@ -18,7 +18,6 @@ export class Album {
   @Column()
   year: number;
 
-  @ManyToMany(() => Artist)
-  @JoinTable()
-  artistId: Artist;
+  @Column()
+  artistId: string | null;
 }

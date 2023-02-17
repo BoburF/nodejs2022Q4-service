@@ -1,13 +1,7 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Database } from 'src/db/db';
-import { FavoriteService } from 'src/favorite/favorite.service';
+import { Favorite } from 'src/favorite/entities/favorite.entity';
 import { Repository } from 'typeorm';
-import { validate } from 'uuid';
 import { CreateUpdateTrackDto } from './dto/create-update-track.dto';
 import { Track } from './entities/track.entity';
 
@@ -16,10 +10,10 @@ export const tracks: Track[] = [];
 @Injectable()
 export class TrackService {
   constructor(
-    private db: Database,
-    private favService: FavoriteService,
     @InjectRepository(Track)
     private trackRepository: Repository<Track>,
+    @InjectRepository(Favorite)
+    private favoriteRepository: Repository<Favorite>,
   ) {}
   async find(): Promise<Track[]> {
     return await this.trackRepository.find();
@@ -31,12 +25,6 @@ export class TrackService {
   }
 
   async findOne(id: string): Promise<Track> {
-    const compareId = validate(id);
-
-    if (!compareId) {
-      throw new BadRequestException('Id is not valid');
-    }
-
     const track: Track | null = await this.trackRepository.findOne({
       where: { id },
     });
@@ -49,11 +37,6 @@ export class TrackService {
   }
 
   async updateOne(trackDto: CreateUpdateTrackDto, id: string): Promise<Track> {
-    const compareId = validate(id);
-
-    if (!compareId) {
-      throw new BadRequestException('Id is not valid');
-    }
     let track: Track | null = await this.trackRepository.findOne({
       where: { id },
     });
@@ -81,12 +64,13 @@ export class TrackService {
     await this.trackRepository.save(track);
   }
 
-  delete(id: string) {
-    const index = this.db.tracks.findIndex((track) => track.id === id);
-    if (index === -1) throw new NotFoundException('Track not founded');
-    this.db.tracks.splice(index, 1);
-    if (this.db.favorites.tracks.includes(id)) {
-      this.favService.delete('track', id);
-    }
+  async delete(id: string) {
+    await this.trackRepository.delete(id);
+    const favorite = (
+      await this.favoriteRepository.find({ relations: { tracks: true } })
+    )[0];
+    const indexFav = favorite.tracks.findIndex((track) => track.id === id);
+    favorite.tracks.splice(indexFav, 1);
+    await this.favoriteRepository.save(favorite);
   }
 }

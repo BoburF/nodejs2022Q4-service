@@ -1,14 +1,14 @@
-import { IsString, IsNumber, ValidateIf } from 'class-validator';
+import { IsString, IsNumber, ValidateIf, IsOptional } from 'class-validator';
 
 export class CreateUpdateTrackDto {
   @IsString()
   name: string;
 
-  @IsString()
+  @IsOptional()
   @ValidateIf((object, value) => value !== null)
   artistId: string | null;
 
-  @IsString()
+  @IsOptional()
   @ValidateIf((object, value) => value !== null)
   albumId: string | null;
 

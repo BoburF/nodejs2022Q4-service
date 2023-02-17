@@ -1,62 +1,73 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Database } from 'src/db/db';
-import { FavoriteService } from 'src/favorite/favorite.service';
-import { TrackService } from 'src/track/track.service';
-import { v4 } from 'uuid';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Favorite } from 'src/favorite/entities/favorite.entity';
+import { Track } from 'src/track/entities/track.entity';
+import { Repository } from 'typeorm';
 import { CreateUpdateAlbumDto } from './dto/create-update-album.dto';
-import { Album } from './interface/album.interface';
+import { Album } from './entities/album.entity';
 
 export const albums: Album[] = [];
 
 @Injectable()
 export class AlbumService {
   constructor(
-    private db: Database,
-    private trackService: TrackService,
-    private favsService: FavoriteService,
+    @InjectRepository(Album)
+    private albumRepository: Repository<Album>,
+    @InjectRepository(Favorite)
+    private favoriteRepository: Repository<Favorite>,
+    @InjectRepository(Track)
+    private trackRepository: Repository<Track>,
   ) {}
-  find(): Album[] {
-    return this.db.albums;
+  async find(): Promise<Album[]> {
+    return await this.albumRepository.find();
   }
 
-  create({ name, year, artistId }): Album {
-    const id: string = v4();
-    const album = {
-      id,
-      name,
-      year,
-      artistId,
-    };
-    this.db.albums.push(album);
-    return album;
+  async create(AlbumDto: CreateUpdateAlbumDto): Promise<Album> {
+    const createAlbum = await this.albumRepository.create(AlbumDto);
+    return await this.albumRepository.save(createAlbum);
   }
 
-  findOne(id: string): Album {
-    const album = this.db.albums.find((album) => album.id === id);
-    if (!album) throw new NotFoundException('Album not found');
-    return album;
-  }
-
-  updateOne(albumDto: CreateUpdateAlbumDto, id: string): Album {
-    const index = this.db.albums.findIndex((album) => album.id === id);
-    if (index === -1) throw new NotFoundException('Album not founded');
-    this.db.albums[index] = { id, ...albumDto };
-    return this.db.albums[index];
-  }
-
-  updateArtistId(id: string) {
-    this.db.albums.forEach((album) => {
-      if (album.artistId === id) album.artistId = null;
+  async findOne(id: string): Promise<Album> {
+    const album: Album | null = await this.albumRepository.findOne({
+      where: { id },
     });
+
+    if (!album) {
+      throw new NotFoundException('User not found');
+    }
+
+    return album;
   }
 
-  delete(id: string) {
-    const index = this.db.albums.findIndex((album) => album.id === id);
-    if (index === -1) throw new NotFoundException('Album is not found');
-    this.db.albums.splice(index, 1);
-    this.trackService.updateAlbumId(id);
-    if (this.db.favorites.albums.includes(id)) {
-      this.favsService.delete('album', id);
+  async updateOne(albumDto: CreateUpdateAlbumDto, id: string): Promise<Album> {
+    let album: Album | null = await this.albumRepository.findOne({
+      where: { id },
+    });
+
+    if (!album) {
+      throw new NotFoundException('User not found');
     }
+
+    album = { id: album.id, ...albumDto };
+    await this.albumRepository.save(album);
+    return album;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  async updateArtistId(id: string) {}
+
+  async delete(id: string) {
+    await this.albumRepository.delete(id);
+    const track = (
+      await this.trackRepository.find({ where: { albumId: id } })
+    )[0];
+    track.albumId = null;
+    await this.trackRepository.save(track);
+    const favorite = (
+      await this.favoriteRepository.find({ relations: { albums: true } })
+    )[0];
+    const indexFav = favorite.albums.findIndex((album) => album.id === id);
+    favorite.albums.splice(indexFav, 1);
+    await this.favoriteRepository.save(favorite);
   }
 }

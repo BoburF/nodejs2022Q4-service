@@ -9,10 +9,10 @@ export class Track {
   name: string;
 
   @Column({ nullable: true })
-  artistId: string;
+  artistId: string | null;
 
   @Column({ nullable: true })
-  albumId: string;
+  albumId: string | null;
 
   @Column()
   duration: number;

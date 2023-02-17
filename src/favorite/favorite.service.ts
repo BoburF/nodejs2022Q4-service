@@ -3,37 +3,36 @@ import {
   BadRequestException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { Logger } from '@nestjs/common/services';
-import { Album } from 'src/album/interface/album.interface';
-import { Artist } from 'src/artist/interface/artist.interface';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Album } from 'src/album/entities/album.entity';
+import { Artist } from 'src/artist/entities/artist.entity';
 import { Database } from 'src/db/db';
-import { Track } from 'src/track/interface/track.interface';
-import { Favorite } from './interface/favorit.interface';
+import { Track } from 'src/track/entities/track.entity';
+import { Repository } from 'typeorm';
+import { Favorite } from './entities/favorite.entity';
 
 export const favorites: Favorite = {
   artists: [],
   albums: [],
   tracks: [],
+  id: '',
 };
 
 @Injectable()
 export class FavoriteService {
-  constructor(private db: Database) {}
+  constructor(
+    private db: Database,
+    @InjectRepository(Favorite)
+    private favoriteRepository: Repository<Favorite>,
+    @InjectRepository(Track)
+    private trackRepository: Repository<Track>,
+    @InjectRepository(Artist)
+    private artistRepository: Repository<Artist>,
+    @InjectRepository(Album)
+    private albumRepository: Repository<Album>,
+  ) {}
   find() {
-    const artists: Artist[] = this.db.artists.filter((artist) =>
-      this.db.favorites.artists.includes(artist.id),
-    );
-    const albums: Album[] = this.db.albums.filter((artist) =>
-      this.db.favorites.albums.includes(artist.id),
-    );
-    const tracks: Track[] = this.db.tracks.filter((artist) =>
-      this.db.favorites.tracks.includes(artist.id),
-    );
-    return {
-      artists: artists,
-      albums: albums,
-      tracks: tracks,
-    };
+    return favorites;
   }
 
   async addId(key: string, id: string) {

@@ -19,19 +19,19 @@ export class TrackController {
 
   @Get()
   @HttpCode(200)
-  getTracks(): Track[] {
+  getTracks() {
     return this.trackService.find();
   }
 
   @Post()
   @HttpCode(201)
-  createTrack(@Body() createTrackDto: CreateUpdateTrackDto): Track {
+  createTrack(@Body() createTrackDto: CreateUpdateTrackDto) {
     return this.trackService.create(createTrackDto);
   }
 
   @Get(':id')
   @HttpCode(200)
-  getById(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): Track {
+  getById(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.trackService.findOne(id);
   }
 
@@ -40,15 +40,13 @@ export class TrackController {
   updateTrack(
     @Body() updateTrackDto: CreateUpdateTrackDto,
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-  ): Track {
+  ) {
     return this.trackService.updateOne(updateTrackDto, id);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  deleteAlbum(
-    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-  ): void {
+  deleteAlbum(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.trackService.delete(id);
   }
 }

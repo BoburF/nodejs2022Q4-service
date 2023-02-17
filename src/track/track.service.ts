@@ -1,55 +1,84 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Database } from 'src/db/db';
 import { FavoriteService } from 'src/favorite/favorite.service';
-import { v4 } from 'uuid';
+import { Repository } from 'typeorm';
+import { validate } from 'uuid';
 import { CreateUpdateTrackDto } from './dto/create-update-track.dto';
-import { Track } from './interface/track.interface';
+import { Track } from './entities/track.entity';
 
 export const tracks: Track[] = [];
 
 @Injectable()
 export class TrackService {
-  constructor(private db: Database, private favService: FavoriteService) {}
-  find(): Track[] {
-    return this.db.tracks;
+  constructor(
+    private db: Database,
+    private favService: FavoriteService,
+    @InjectRepository(Track)
+    private trackRepository: Repository<Track>,
+  ) {}
+  async find(): Promise<Track[]> {
+    return await this.trackRepository.find();
   }
 
-  create({ name, artistId, albumId, duration }): Track {
-    const id: string = v4();
-    const track = {
-      id,
-      name,
-      artistId: artistId || null,
-      albumId: albumId || null,
-      duration,
-    };
-    this.db.tracks.push(track);
+  async create(TrackDto: CreateUpdateTrackDto): Promise<Track> {
+    const createTrack = this.trackRepository.create(TrackDto);
+    return await this.trackRepository.save(createTrack);
+  }
+
+  async findOne(id: string): Promise<Track> {
+    const compareId = validate(id);
+
+    if (!compareId) {
+      throw new BadRequestException('Id is not valid');
+    }
+
+    const track: Track | null = await this.trackRepository.findOne({
+      where: { id },
+    });
+
+    if (!track) {
+      throw new NotFoundException('User not found');
+    }
+
     return track;
   }
 
-  findOne(id: string): Track {
-    const track: Track | null = this.db.tracks.find((track) => track.id === id);
-    if (!track) throw new NotFoundException('Track is not found');
+  async updateOne(trackDto: CreateUpdateTrackDto, id: string): Promise<Track> {
+    const compareId = validate(id);
+
+    if (!compareId) {
+      throw new BadRequestException('Id is not valid');
+    }
+    let track: Track | null = await this.trackRepository.findOne({
+      where: { id },
+    });
+
+    if (!track) {
+      throw new NotFoundException('User not found');
+    }
+
+    track = { id: track.id, ...trackDto };
+    await this.trackRepository.save(track);
     return track;
   }
 
-  updateOne(trackDto: CreateUpdateTrackDto, id: string): Track {
-    const index = this.db.tracks.findIndex((track) => track.id === id);
-    if (index === -1) throw new NotFoundException('Track is not found');
-    this.db.tracks[index] = { id, ...trackDto };
-    return this.db.tracks[index];
+  async updateArtistId(id: string) {
+    const track: Track | null = await this.trackRepository.findOne({
+      where: { artistId: id },
+    });
+    await this.trackRepository.save(track);
   }
 
-  updateArtistId(id: string) {
-    this.db.tracks.forEach((track) => {
-      if (track.artistId === id) track.artistId = null;
+  async updateAlbumId(id: string) {
+    const track: Track | null = await this.trackRepository.findOne({
+      where: { albumId: id },
     });
-  }
-
-  updateAlbumId(id: string) {
-    this.db.tracks.forEach((track) => {
-      if (track.albumId === id) track.albumId = null;
-    });
+    await this.trackRepository.save(track);
   }
 
   delete(id: string) {

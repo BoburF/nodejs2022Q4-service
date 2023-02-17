@@ -2,51 +2,40 @@ import {
   BadRequestException,
   Injectable,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
-import { NotFoundException } from '@nestjs/common/exceptions';
-import { v4, validate } from 'uuid';
-import User from './interface/user.interface';
-
-const users: User[] = [];
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { validate } from 'uuid';
+import { CreateUserDto } from './dto/create-user.dto';
+import { timeSet, User } from './entities/user.entity';
 
 @Injectable()
 export class UserService {
-  find(): User[] {
-    return users;
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) {}
+  async find() {
+    return (await this.userRepository.find()).map((user) => user.toResponse());
   }
 
-  create({ login, password }): Omit<User, 'password'> {
-    const id: string = v4();
-    const createdAt: number = new Date().getTime();
+  async create(CreateUserDto: CreateUserDto) {
+    const createUser = this.userRepository.create(CreateUserDto);
 
-    const newUser = {
-      id,
-      login,
-      password,
-      version: 1,
-      createdAt,
-      updatedAt: createdAt,
-    };
-
-    users.push(newUser);
-
-    return {
-      id,
-      login,
-      version: newUser.version,
-      createdAt,
-      updatedAt: newUser.updatedAt,
-    };
+    return (await this.userRepository.save(createUser)).toResponse();
   }
 
-  findOne(id: string): User {
+  async findOne(id: string): Promise<User> {
     const compareId = validate(id);
 
     if (!compareId) {
       throw new BadRequestException('Id is not valid');
     }
 
-    const user: User | null = users.find((user) => id === user.id);
+    const user: User | null = await this.userRepository.findOne({
+      where: { id },
+    });
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -55,18 +44,14 @@ export class UserService {
     return user;
   }
 
-  updateOne({ oldPassword, newPassword }, id: string): User {
+  async updateOne({ oldPassword, newPassword }, id: string) {
     const compareId = validate(id);
 
     if (!compareId) {
       throw new BadRequestException('Id is not valid');
     }
-    let index: number | null;
-    const user: User | null = users.find((user, idx) => {
-      if (id === user.id) {
-        index = idx;
-        return user;
-      }
+    const user: User | null = await this.userRepository.findOne({
+      where: { id },
     });
 
     if (!user) {
@@ -75,35 +60,22 @@ export class UserService {
     if (oldPassword === user.password) {
       user.password = newPassword;
       user.version = user.version + 1;
-      user.updatedAt = new Date().getTime();
-      users[index] = user;
-    } else {
-      throw new ForbiddenException('Password is incorrect');
+      user.updatedAt = timeSet();
+      return (await this.userRepository.save(user)).toResponse();
     }
-    delete user['password'];
-    return user;
+
+    throw new ForbiddenException('Password is incorrect');
   }
 
-  delete(id: string) {
+  async delete(id: string) {
     const compareId = validate(id);
 
     if (!compareId) {
       throw new BadRequestException('Id is not valid');
     }
-    let index: number | null;
-    const user: User | null = users.find((user, idx) => {
-      if (user.id === id) {
-        index = idx;
-        return user;
-      }
-    });
-
-    if (!user) {
+    const user = await this.userRepository.delete(id);
+    if (user.affected === 0) {
       throw new NotFoundException('User not found');
     }
-
-    users.splice(index, 1);
-
-    return user;
   }
 }

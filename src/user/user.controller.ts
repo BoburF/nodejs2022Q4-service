@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import User from './interface/user.interface';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -19,7 +18,7 @@ export class UserController {
 
   @Get()
   @HttpCode(200)
-  getUsers(): User[] {
+  getUsers() {
     return this.userService.find();
   }
 

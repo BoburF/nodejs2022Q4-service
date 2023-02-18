@@ -1,11 +1,4 @@
-import { Artist } from 'src/artist/entities/artist.entity';
-import {
-  Column,
-  Entity,
-  JoinTable,
-  ManyToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('album')
 export class Album {
@@ -18,6 +11,6 @@ export class Album {
   @Column()
   year: number;
 
-  @Column()
+  @Column({ nullable: true })
   artistId: string | null;
 }

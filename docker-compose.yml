@@ -1,0 +1,53 @@
+version: "3.9"
+services:
+  nest-api:
+    container_name: app
+    image: app/boburf:app
+    restart: always
+    build:
+      dockerfile: Dockerfile
+      context: .
+      args:
+        - PORT = ${PORT}
+    env_file:
+      - .env
+    ports:
+      - ${PORT}:${PORT}
+      - ${DEBUG}:${DEBUG}
+    volumes:
+      - ./:/app
+      - ignore:/app/node_modules
+    command: npm run start:dev
+    depends_on:
+      - postgres
+    networks:
+      - postgres
+
+  postgres:
+    container_name: postgres
+    image: app/postgres:postgres
+    build:
+      dockerfile: src/Dockerfile
+      context: .
+    env_file:
+      - .env
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT_EXTERNAL}
+    volumes:
+      - DB:${POSTGRES_DATA}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - postgres
+
+volumes:
+  DB:
+  ignore:
+
+networks:
+  postgres:
+    driver: bridge

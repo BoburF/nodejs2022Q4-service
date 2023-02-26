@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { validate } from 'uuid';
+import {compare, hash} from "bcrypt";
 import { CreateUserDto } from './dto/create-user.dto';
 import { timeSet, User } from './entities/user.entity';
 
@@ -21,7 +22,8 @@ export class UserService {
   }
 
   async create(CreateUserDto: CreateUserDto) {
-    const createUser = this.userRepository.create(CreateUserDto);
+    const password = await hash(CreateUserDto.password, 10)
+    const createUser = this.userRepository.create({...CreateUserDto, password });
 
     return (await this.userRepository.save(createUser)).toResponse();
   }
@@ -57,7 +59,8 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    if (oldPassword === user.password) {
+    if (await compare(newPassword, oldPassword)) {
+      newPassword = await hash(newPassword, 10)
       user.password = newPassword;
       user.version = user.version + 1;
       user.updatedAt = timeSet();

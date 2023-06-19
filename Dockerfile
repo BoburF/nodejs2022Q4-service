@@ -1,28 +1,22 @@
-FROM node:18-alpine as builder
+FROM node:18-alpine
 
-WORKDIR /app/build
+# ENV NODE_ENV=production
 
-COPY package*.json ./
+EXPOSE 4000
 
-COPY tsconfig*.json ./
+# Create app directory
+WORKDIR /nodejs2022q4/app/src
 
-RUN npm i
+# Install app dependencies
+# A wildcard is used to ensure both package.json AND package-lock.json are copied
+# where available (npm@5+)
+COPY package*.json .
 
-RUN npm cache clean --force
+RUN npm install
+# If you are building your code for production
+# RUN npm ci --only=production
 
-ENV PATH=/app/build/node_modules/.bin:$PATH
-
-WORKDIR /app/build/dev
-
+# Bundle app source
 COPY . .
 
-FROM node:18.0.0-alpine as runner
-
-COPY --from=builder /app/build/dev /app
-COPY --from=builder /app/build/node_modules/ /app/node_modules
-
-WORKDIR /app
-
-EXPOSE ${PORT}
-
-CMD ["npm", "run","start:dev"]
+CMD ["npm", "run", "start:dev"]

@@ -1,53 +1,37 @@
-version: "3.9"
 services:
-  nest-api:
-    container_name: app
-    image: app/boburf:app
-    restart: always
-    build:
-      dockerfile: Dockerfile
-      context: .
-      args:
-        - PORT = ${PORT}
+  node:
+    build: .
+    image: nodejs2022q4_node
     env_file:
       - .env
+    restart: always
+    networks:
+      - my_network
     ports:
       - ${PORT}:${PORT}
-      - ${DEBUG}:${DEBUG}
-    volumes:
-      - ./:/app
-      - ignore:/app/node_modules
-    command: npm run start:dev
     depends_on:
       - postgres
-    networks:
-      - postgres
-
-  postgres:
-    container_name: postgres
-    image: app/postgres:postgres
-    build:
-      dockerfile: src/Dockerfile
-      context: .
-    env_file:
-      - .env
-    ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT_EXTERNAL}
+    environment:
+      - PORT=${PORT}
     volumes:
-      - DB:${POSTGRES_DATA}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: always
-    networks:
-      - postgres
+      - ./:/nodejs2022q4/app/src
 
-volumes:
-  DB:
-  ignore:
-
-networks:
   postgres:
+    build: ./src
+    image: nodejs2022q4_postgres
+    networks:
+    - my_network
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DATABASE}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    volumes:
+      - datapg:${POSTGRES_DATA}
+networks:
+  my_network:
     driver: bridge
+volumes:
+  datapg:

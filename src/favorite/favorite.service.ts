@@ -1,0 +1,83 @@
+import {
+  Injectable,
+  BadRequestException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Album } from 'src/album/entities/album.entity';
+import { Artist } from 'src/artist/entities/artist.entity';
+import { Database } from 'src/db/db';
+import { Track } from 'src/track/entities/track.entity';
+import { Repository } from 'typeorm';
+import { validate } from 'uuid';
+import { Favorite } from './entities/favorite.entity';
+
+@Injectable()
+export class FavoriteService {
+  constructor(
+    private db: Database,
+    @InjectRepository(Favorite)
+    private favoriteRepository: Repository<Favorite>,
+    @InjectRepository(Track)
+    private trackRepository: Repository<Track>,
+    @InjectRepository(Artist)
+    private artistRepository: Repository<Artist>,
+    @InjectRepository(Album)
+    private albumRepository: Repository<Album>,
+  ) {}
+  async find() {
+    return (
+      await this.favoriteRepository.find({
+        relations: {
+          tracks: true,
+          albums: true,
+          artists: true,
+        },
+      })
+    )[0];
+  }
+
+  async create() {
+    const favorite = await this.favoriteRepository.create({
+      artists: [],
+      albums: [],
+      tracks: [],
+    });
+    return favorite;
+  }
+
+  async addId(key: string, id: string) {
+    const compareId = validate(id);
+
+    if (!compareId) {
+      throw new BadRequestException('Id is not valid');
+    }
+    const favorites = await this.find();
+
+    const checkedId: Album | Track | Artist = await this[
+      key + 'Repository'
+    ].findOneBy({ id });
+    if (!checkedId) {
+      throw new UnprocessableEntityException(`${key}.id is not founded`);
+    }
+    favorites[key + 's'].push(checkedId);
+
+    return await this.favoriteRepository.save(favorites);
+  }
+
+  async delete(key: string, id: string) {
+    const compareId = validate(id);
+
+    if (!compareId) {
+      throw new BadRequestException('Id is not valid');
+    }
+    const favCategory = key + 's';
+    const favorites = await this.find();
+    favorites[favCategory] = favorites[favCategory].filter(
+      (elements) => elements.id !== id,
+    );
+
+    await this.favoriteRepository.save(favorites);
+    return favorites;
+  }
+}

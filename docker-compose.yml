@@ -1,0 +1,37 @@
+services:
+  node:
+    build: .
+    image: nodejs2022q4_node
+    env_file:
+      - .env
+    restart: always
+    networks:
+      - my_network
+    ports:
+      - ${PORT}:${PORT}
+    depends_on:
+      - postgres
+    environment:
+      - PORT=${PORT}
+    volumes:
+      - ./:/nodejs2022q4/app/src
+
+  postgres:
+    build: ./src
+    image: nodejs2022q4_postgres
+    networks:
+    - my_network
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DATABASE}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    volumes:
+      - datapg:${POSTGRES_DATA}
+networks:
+  my_network:
+    driver: bridge
+volumes:
+  datapg:
